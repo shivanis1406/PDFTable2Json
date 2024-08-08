@@ -9,7 +9,7 @@ import cv2
 import re
 from dotenv import load_dotenv
 import streamlit as st
-import razorpay
+import razorpay 
 
 load_dotenv()
 
@@ -227,8 +227,6 @@ def main():
                         st.write("Waiting for payment confirmation...")
 
                         # Automatically fetch payment status
-                        payment_verified = False
-                        while not payment_verified:
                         payment_verified = fetch_payment_status(order_id)
                         if payment_verified:
                             st.success("Payment Verified! Processing your request...")
