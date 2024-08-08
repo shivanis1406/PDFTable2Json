@@ -222,7 +222,7 @@ def main():
                 }
                 if st.button("Make Payment"):
                     st.markdown(f"""
-                    <form action="{callback_url}" method="POST">
+                    <form>
                       <script
                         src="https://checkout.razorpay.com/v1/checkout.js"
                         data-key="{razorpay_options['key']}"
