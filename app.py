@@ -195,7 +195,7 @@ def main():
                 order_id = order['id']
 
                 # Razorpay payment button
-                callback_url = 'https://your-callback-url.com'  # Replace with your callback URL
+                callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
                 razorpay_options = {
                     'key': razorpay_key_id,
                     'amount': amount_to_charge,
@@ -206,8 +206,8 @@ def main():
                     'callback_url': callback_url,
                     'prefill': {
                         'name': 'User Name',
-                        'email': 'user@example.com',
-                        'contact': '9999999999'
+                        'email': 'shivanis1406@gmail.com',
+                        'contact': '9654415614'
                     },
                     'notes': {
                         'address': 'Razorpay Corporate Office'
