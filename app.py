@@ -142,7 +142,7 @@ def main():
     st.markdown("<h3 style='font-size: 20px;'>Are you looking to effortlessly extract your transactions from a PDF bank statement into an Excel spreadsheet? With the power of AI, this process is now simpler and faster than ever! 🚀</h3>", unsafe_allow_html=True)
 
     pdf_file = st.file_uploader("Upload your Bank Statement PDF file", type="pdf")
-    lim = st.number_input("Enter the number of pages to process", min_value=1, value=1)
+    lim = st.number_input("Enter the end page for extraction", min_value=1, value=1)
 
     st.markdown("<h3 style='font-size: 15px;'>Click on Start to extract transactions to Excel</h3>", unsafe_allow_html=True)
     start_button = st.button("Start")
