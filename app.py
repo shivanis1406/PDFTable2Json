@@ -221,7 +221,7 @@ def main():
                     }
                 }
                 if st.button("Make Payment"):
-                    st.markdown(f"""
+                   st.markdown(f"""
                     <form>
                       <script
                         src="https://checkout.razorpay.com/v1/checkout.js"
@@ -231,7 +231,6 @@ def main():
                         data-name="{razorpay_options['name']}"
                         data-description="{razorpay_options['description']}"
                         data-order_id="{razorpay_options['order_id']}"
-                        data-callback_url="{razorpay_options['callback_url']}"
                         data-prefill.name="{razorpay_options['prefill']['name']}"
                         data-prefill.email="{razorpay_options['prefill']['email']}"
                         data-prefill.contact="{razorpay_options['prefill']['contact']}"
@@ -240,6 +239,46 @@ def main():
                       ></script>
                       <input type="hidden" custom="Hidden Element" name="hidden">
                     </form>
+                    <script>
+                    var options = {
+                        "key": "{razorpay_options['key']}",
+                        "amount": "{razorpay_options['amount']}",
+                        "currency": "{razorpay_options['currency']}",
+                        "name": "{razorpay_options['name']}",
+                        "description": "{razorpay_options['description']}",
+                        "order_id": "{razorpay_options['order_id']}",
+                        "handler": function (response){
+                            alert(response.razorpay_payment_id);
+                            alert(response.razorpay_order_id);
+                            alert(response.razorpay_signature);
+                        },
+                        "prefill": {{
+                            "name": "{razorpay_options['prefill']['name']}",
+                            "email": "{razorpay_options['prefill']['email']}",
+                            "contact": "{razorpay_options['prefill']['contact']}"
+                        }},
+                        "notes": {{
+                            "address": "{razorpay_options['notes']['address']}"
+                        }},
+                        "theme": {{
+                            "color": "{razorpay_options['theme']['color']}"
+                        }}
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.on('payment.failed', function (response){
+                            alert(response.error.code);
+                            alert(response.error.description);
+                            alert(response.error.source);
+                            alert(response.error.step);
+                            alert(response.error.reason);
+                            alert(response.error.metadata.order_id);
+                            alert(response.error.metadata.payment_id);
+                    });
+                    document.getElementById('rzp-button1').onclick = function(e){
+                        rzp1.open();
+                        e.preventDefault();
+                    }
+                    </script>
                     """, unsafe_allow_html=True)
             else:
                 with open(output_file, "rb") as f:
