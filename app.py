@@ -21,12 +21,27 @@ output_folder = "output"
 key = os.environ['AZURE_KEY1']
 endpoint = os.environ['AZURE_ENDPOINT']
 
+# Razorpay credentials
+razorpay_key_id = os.environ['RAZORPAY_KEY_ID']
+razorpay_key_secret = os.environ['RAZORPAY_KEY_SECRET']
+
 os.system(f"rm -rf {images}")
 os.system(f"mkdir {images}")
 
 os.system(f"rm -rf {output_folder}")
 os.system(f"mkdir {output_folder}")
 
+def create_razorpay_order(amount, currency='INR'):
+    client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
+    order_data = {
+        'amount': amount,
+        'currency': currency,
+        'payment_capture': 1  # Auto capture payments
+    }
+    order = client.order.create(data=order_data)
+    return order
+
+    
 def pdf_to_png(pdf_path, output_folder, dpi, lim):
     pdf_document = fitz.open(pdf_path)
 
@@ -140,6 +155,7 @@ def createXls(directory_path, output_folder, lim):
 def main():
     st.title("✨ Transform Your Bank Statement into Excel with AI! 📊")
     st.markdown("<h3 style='font-size: 20px;'>Are you looking to effortlessly extract your transactions from a PDF bank statement into an Excel spreadsheet? With the power of AI, this process is now simpler and faster than ever! 🚀</h3>", unsafe_allow_html=True)
+    st.markdown("<h4 style='font-size: 15px;'>Free for first 2 pages of the pdf and Rs 2 per page after that</h4>", unsafe_allow_html=True)
 
     pdf_file = st.file_uploader("Upload your Bank Statement PDF file", type="pdf")
     lim = st.number_input("Enter the end page for extraction", min_value=1, value=1)
@@ -167,8 +183,64 @@ def main():
             output_file = f'{output_folder}/combined_sheets.xlsx'
             createCombinedXls(output_folder, output_file)
 
-            with open(output_file, "rb") as f:
-                st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
+            # Calculate the amount to be charged
+            amount_to_charge = max(0, (lim - 2) * 200)  # Rs 2 per page for more than 2 pages
+
+            if amount_to_charge > 0:
+                st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
+                st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
+
+                # Create Razorpay order
+                order = create_razorpay_order(amount_to_charge)
+                order_id = order['id']
+
+                # Razorpay payment button
+                callback_url = 'https://your-callback-url.com'  # Replace with your callback URL
+                razorpay_options = {
+                    'key': razorpay_key_id,
+                    'amount': amount_to_charge,
+                    'currency': 'INR',
+                    'name': 'Your Company Name',
+                    'description': 'Payment for Bank Statement Extraction',
+                    'order_id': order_id,
+                    'callback_url': callback_url,
+                    'prefill': {
+                        'name': 'User Name',
+                        'email': 'user@example.com',
+                        'contact': '9999999999'
+                    },
+                    'notes': {
+                        'address': 'Razorpay Corporate Office'
+                    },
+                    'theme': {
+                        'color': '#F37254'
+                    }
+                }
+                st.markdown(f"""
+                <form action="{callback_url}" method="POST">
+                  <script
+                    src="https://checkout.razorpay.com/v1/checkout.js"
+                    data-key="{razorpay_options['key']}"
+                    data-amount="{razorpay_options['amount']}"
+                    data-currency="{razorpay_options['currency']}"
+                    data-name="{razorpay_options['name']}"
+                    data-description="{razorpay_options['description']}"
+                    data-order_id="{razorpay_options['order_id']}"
+                    data-callback_url="{razorpay_options['callback_url']}"
+                    data-prefill.name="{razorpay_options['prefill']['name']}"
+                    data-prefill.email="{razorpay_options['prefill']['email']}"
+                    data-prefill.contact="{razorpay_options['prefill']['contact']}"
+                    data-notes.address="{razorpay_options['notes']['address']}"
+                    data-theme.color="{razorpay_options['theme']['color']}"
+                  ></script>
+                  <input type="hidden" custom="Hidden Element" name="hidden">
+                </form>
+                """, unsafe_allow_html=True)
+            else:
+                with open(output_file, "rb") as f:
+                    st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
+
+
 
 if __name__ == "__main__":
     main()
