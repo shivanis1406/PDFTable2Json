@@ -195,6 +195,8 @@ def main():
             if amount_to_charge > 0:
                 st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
+                st.write('Make payment using the following link')
+                st.write("https://razorpay.me/@shivanisharma8078")
             else:
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
