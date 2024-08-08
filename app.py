@@ -196,7 +196,7 @@ def main():
                 st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
                 # Display the image
-                img = Image.open("qr.jpeg")
+                img = Image.open("QrCode.jpeg")
                 img = img.resize((200, 200), Image.ANTIALIAS)
                 st.image(img, caption="Scan the QR code to make the payment", use_column_width=False)
             else:
