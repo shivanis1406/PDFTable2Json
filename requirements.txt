@@ -1,0 +1,9 @@
+pandas
+openpyxl
+requests
+python-dotenv
+pymupdf
+azure-ai-formrecognizer
+azure-core
+xlsxwriter
+streamlit
