@@ -7,3 +7,4 @@ azure-ai-formrecognizer
 azure-core
 xlsxwriter
 streamlit
+opencv-python
