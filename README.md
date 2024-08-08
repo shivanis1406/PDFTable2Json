@@ -1,7 +1,7 @@
 ---
 title: ExtractTableFromBankStatement
 emoji: 🌖
-colorFrom: blue
+colorFrom: green
 colorTo: yellow
 sdk: streamlit
 sdk_version: 1.37.1
