@@ -195,13 +195,18 @@ def main():
             if amount_to_charge > 0:
                 st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
-                st.write('Make payment using the following link')
-                st.write("https://razorpay.me/@shivanisharma8078")
+                # Display the image
+                st.image("QrCode.jpeg", caption="Scan the QR code to make the payment", use_column_width=True)
+
             else:
+                pdf_to_png("temp.pdf", images_folder, 300, lim)
+                createXls(images_folder, output_folder, lim)
+
+                output_file = f'{output_folder}/combined_sheets.xlsx'
+                createCombinedXls(output_folder, output_file)
+
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
-
-
 
 if __name__ == "__main__":
     main()
