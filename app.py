@@ -216,26 +216,27 @@ def main():
                         'color': '#F37254'
                     }
                 }
-                st.markdown(f"""
-                <form action="{callback_url}" method="POST">
-                  <script
-                    src="https://checkout.razorpay.com/v1/checkout.js"
-                    data-key="{razorpay_options['key']}"
-                    data-amount="{razorpay_options['amount']}"
-                    data-currency="{razorpay_options['currency']}"
-                    data-name="{razorpay_options['name']}"
-                    data-description="{razorpay_options['description']}"
-                    data-order_id="{razorpay_options['order_id']}"
-                    data-callback_url="{razorpay_options['callback_url']}"
-                    data-prefill.name="{razorpay_options['prefill']['name']}"
-                    data-prefill.email="{razorpay_options['prefill']['email']}"
-                    data-prefill.contact="{razorpay_options['prefill']['contact']}"
-                    data-notes.address="{razorpay_options['notes']['address']}"
-                    data-theme.color="{razorpay_options['theme']['color']}"
-                  ></script>
-                  <input type="hidden" custom="Hidden Element" name="hidden">
-                </form>
-                """, unsafe_allow_html=True)
+                if st.button("Make Payment"):
+                    st.markdown(f"""
+                    <form action="{callback_url}" method="POST">
+                      <script
+                        src="https://checkout.razorpay.com/v1/checkout.js"
+                        data-key="{razorpay_options['key']}"
+                        data-amount="{razorpay_options['amount']}"
+                        data-currency="{razorpay_options['currency']}"
+                        data-name="{razorpay_options['name']}"
+                        data-description="{razorpay_options['description']}"
+                        data-order_id="{razorpay_options['order_id']}"
+                        data-callback_url="{razorpay_options['callback_url']}"
+                        data-prefill.name="{razorpay_options['prefill']['name']}"
+                        data-prefill.email="{razorpay_options['prefill']['email']}"
+                        data-prefill.contact="{razorpay_options['prefill']['contact']}"
+                        data-notes.address="{razorpay_options['notes']['address']}"
+                        data-theme.color="{razorpay_options['theme']['color']}"
+                      ></script>
+                      <input type="hidden" custom="Hidden Element" name="hidden">
+                    </form>
+                    """, unsafe_allow_html=True)
             else:
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
