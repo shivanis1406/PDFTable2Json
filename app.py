@@ -195,7 +195,7 @@ def main():
                 order_id = order['id']
 
                 # Razorpay payment button
-                callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
+                #callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
                 razorpay_options = {
                     'key': razorpay_key_id,
                     'amount': amount_to_charge,
@@ -203,7 +203,11 @@ def main():
                     'name': 'Your Company Name',
                     'description': 'Payment for Bank Statement Extraction',
                     'order_id': order_id,
-                    'callback_url': callback_url,
+                    "handler": function (response){
+                        alert(response.razorpay_payment_id);
+                        alert(response.razorpay_order_id);
+                        alert(response.razorpay_signature)
+                    },
                     'prefill': {
                         'name': 'User Name',
                         'email': 'shivanis1406@gmail.com',
