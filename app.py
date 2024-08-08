@@ -196,8 +196,9 @@ def main():
                 st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
                 # Display the image
-                st.image("QrCode.jpeg", caption="Scan the QR code to make the payment", use_column_width=True)
-
+                img = Image.open("qr.jpeg")
+                img = img.resize((200, 200), Image.ANTIALIAS)
+                st.image(img, caption="Scan the QR code to make the payment", use_column_width=False)
             else:
                 pdf_to_png("temp.pdf", images_folder, 300, lim)
                 createXls(images_folder, output_folder, lim)
