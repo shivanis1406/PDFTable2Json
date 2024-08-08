@@ -195,7 +195,7 @@ def main():
                 order_id = order['id']
 
                 # Razorpay payment button
-                callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
+                callback_url = 'https://razorpay-webhook-three.vercel.app/'  # Replace with your callback URL
                 if st.button("Make Payment"):
                         # Razorpay payment form rendering
                         st.markdown(f"""
