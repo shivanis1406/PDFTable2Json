@@ -203,7 +203,7 @@ def main():
                     'name': 'Your Company Name',
                     'description': 'Payment for Bank Statement Extraction',
                     'order_id': order_id,
-                    "handler": function (response){
+                    'handler': function (response){
                         alert(response.razorpay_payment_id);
                         alert(response.razorpay_order_id);
                         alert(response.razorpay_signature)
@@ -250,7 +250,7 @@ def main():
                         "handler": function (response){
                             alert(response.razorpay_payment_id);
                             alert(response.razorpay_order_id);
-                            alert(response.razorpay_signature);
+                            alert(response.razorpay_signature)
                         },
                         "prefill": {{
                             "name": "{razorpay_options['prefill']['name']}",
