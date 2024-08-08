@@ -195,50 +195,6 @@ def main():
             if amount_to_charge > 0:
                 st.markdown("<h3 style='font-size: 15px;'>Payment Required</h3>", unsafe_allow_html=True)
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
-
-                # Create Razorpay order
-                order = create_razorpay_order(amount_to_charge)
-                order_id = order['id']
-
-                # Razorpay payment button
-                callback_url = 'https://razorpay-webhook-three.vercel.app/api/razorpay-webhook'  # Replace with your callback URL
-                if st.button("Make Payment"):
-                        # Razorpay payment form rendering
-                        st.markdown(f"""
-                        <form action=f"{callback_url}" method="POST">
-                            <script
-                                src="https://checkout.razorpay.com/v1/checkout.js"
-                                data-key="{razorpay_key_id}"
-                                data-amount="{amount_to_charge}"
-                                data-currency="INR"
-                                data-order_id="{order_id}"
-                                data-buttontext="Pay with Razorpay"
-                                data-name="Your Company Name"
-                                data-description="Bank Statement Extraction"
-                                data-prefill.name="User Name"
-                                data-prefill.email="shivanis1406@gmail.com"
-                                data-prefill.contact="9654415614"
-                                data-theme.color="#F37254">
-                            </script>
-                            <input type="hidden" custom="Hidden Element" name="hidden">
-                        </form>
-                        """, unsafe_allow_html=True)
-
-                        st.write("Waiting for payment confirmation...")
-
-                        # Automatically fetch payment status
-                        payment_verified = fetch_payment_status(order_id)
-                        if payment_verified:
-                            st.success("Payment Verified! Processing your request...")
-                            # Continue with PDF to Excel conversion logic
-                            pdf_to_png("temp.pdf", images_folder, 300, lim)
-                            createXls(images_folder, output_folder, lim)
-
-                            output_file = f'{output_folder}/combined_sheets.xlsx'
-                            createCombinedXls(output_folder, output_file)
-                        else:
-                            st.info("Payment Failed. Please retry")
-                            time.sleep(5)
             else:
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
