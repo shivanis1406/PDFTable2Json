@@ -9,6 +9,7 @@ import cv2
 import re
 from dotenv import load_dotenv
 import streamlit as st
+import razorpay
 
 load_dotenv()
 
@@ -31,8 +32,9 @@ os.system(f"mkdir {images}")
 os.system(f"rm -rf {output_folder}")
 os.system(f"mkdir {output_folder}")
 
+client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
+
 def create_razorpay_order(amount, currency='INR'):
-    client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
     order_data = {
         'amount': amount,
         'currency': currency,
@@ -151,6 +153,16 @@ def createXls(directory_path, output_folder, lim):
 
                 print(f"Completed analysis for {filename}. Generating output files...")
 
+def fetch_payment_status(order_id):
+    try:
+        payments = client.order.payments(order_id)
+        for payment in payments['items']:
+            if payment['status'] == 'captured':
+                return True
+        return False
+    except Exception as e:
+        st.error(f"Error fetching payment status: {str(e)}")
+        return False
 
 def main():
     st.title("✨ Transform Your Bank Statement into Excel with AI! 📊")
@@ -177,12 +189,6 @@ def main():
             os.system(f"rm -rf {output_folder}")
             os.system(f"mkdir {output_folder}")
 
-            pdf_to_png("temp.pdf", images_folder, 300, lim)
-            createXls(images_folder, output_folder, lim)
-
-            output_file = f'{output_folder}/combined_sheets.xlsx'
-            createCombinedXls(output_folder, output_file)
-
             # Calculate the amount to be charged
             amount_to_charge = max(0, (lim - 2) * 200)  # Rs 2 per page for more than 2 pages
 
@@ -195,7 +201,7 @@ def main():
                 order_id = order['id']
 
                 # Razorpay payment button
-                callback_url = 'https://razorpay-webhook-three.vercel.app/'  # Replace with your callback URL
+                callback_url = 'https://razorpay-webhook-three.vercel.app/api/razorpay-webhook'  # Replace with your callback URL
                 if st.button("Make Payment"):
                         # Razorpay payment form rendering
                         st.markdown(f"""
@@ -217,6 +223,24 @@ def main():
                             <input type="hidden" custom="Hidden Element" name="hidden">
                         </form>
                         """, unsafe_allow_html=True)
+
+                        st.write("Waiting for payment confirmation...")
+
+                        # Automatically fetch payment status
+                        payment_verified = False
+                        while not payment_verified:
+                        payment_verified = fetch_payment_status(order_id)
+                        if payment_verified:
+                            st.success("Payment Verified! Processing your request...")
+                            # Continue with PDF to Excel conversion logic
+                            pdf_to_png("temp.pdf", images_folder, 300, lim)
+                            createXls(images_folder, output_folder, lim)
+
+                            output_file = f'{output_folder}/combined_sheets.xlsx'
+                            createCombinedXls(output_folder, output_file)
+                        else:
+                            st.info("Payment Failed. Please retry")
+                            time.sleep(5)
             else:
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
