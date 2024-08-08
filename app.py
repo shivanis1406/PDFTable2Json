@@ -138,7 +138,8 @@ def createXls(directory_path, output_folder, lim):
 
 
 def main():
-    st.title("Bank Statement PDF to Excel Converter")
+    st.title("✨ Transform Your Bank Statement into Excel with AI! 📊")
+    st.markdown("<h3 style='font-size: 20px;'>Are you looking to effortlessly extract your transactions from a PDF bank statement into an Excel spreadsheet? With the power of AI, this process is now simpler and faster than ever! 🚀</h3>", unsafe_allow_html=True)
 
     pdf_file = st.file_uploader("Upload your Bank Statement PDF file", type="pdf")
     lim = st.number_input("Enter the number of pages to process", min_value=1, value=1)
