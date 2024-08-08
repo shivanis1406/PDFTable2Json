@@ -8,3 +8,4 @@ azure-core
 xlsxwriter
 streamlit
 opencv-python
+razorpay
