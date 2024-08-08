@@ -195,91 +195,28 @@ def main():
                 order_id = order['id']
 
                 # Razorpay payment button
-                #callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
-                razorpay_options = {
-                    'key': razorpay_key_id,
-                    'amount': amount_to_charge,
-                    'currency': 'INR',
-                    'name': 'Your Company Name',
-                    'description': 'Payment for Bank Statement Extraction',
-                    'order_id': order_id,
-                    'handler': function (response){
-                        alert(response.razorpay_payment_id);
-                        alert(response.razorpay_order_id);
-                        alert(response.razorpay_signature)
-                    },
-                    'prefill': {
-                        'name': 'User Name',
-                        'email': 'shivanis1406@gmail.com',
-                        'contact': '9654415614'
-                    },
-                    'notes': {
-                        'address': 'Razorpay Corporate Office'
-                    },
-                    'theme': {
-                        'color': '#F37254'
-                    }
-                }
+                callback_url = 'http://localhost:5000/razorpay_callback'  # Replace with your callback URL
                 if st.button("Make Payment"):
-                   st.markdown(f"""
-                    <form>
-                      <script
-                        src="https://checkout.razorpay.com/v1/checkout.js"
-                        data-key="{razorpay_options['key']}"
-                        data-amount="{razorpay_options['amount']}"
-                        data-currency="{razorpay_options['currency']}"
-                        data-name="{razorpay_options['name']}"
-                        data-description="{razorpay_options['description']}"
-                        data-order_id="{razorpay_options['order_id']}"
-                        data-prefill.name="{razorpay_options['prefill']['name']}"
-                        data-prefill.email="{razorpay_options['prefill']['email']}"
-                        data-prefill.contact="{razorpay_options['prefill']['contact']}"
-                        data-notes.address="{razorpay_options['notes']['address']}"
-                        data-theme.color="{razorpay_options['theme']['color']}"
-                      ></script>
-                      <input type="hidden" custom="Hidden Element" name="hidden">
-                    </form>
-                    <script>
-                    var options = {
-                        "key": "{razorpay_options['key']}",
-                        "amount": "{razorpay_options['amount']}",
-                        "currency": "{razorpay_options['currency']}",
-                        "name": "{razorpay_options['name']}",
-                        "description": "{razorpay_options['description']}",
-                        "order_id": "{razorpay_options['order_id']}",
-                        "handler": function (response){
-                            alert(response.razorpay_payment_id);
-                            alert(response.razorpay_order_id);
-                            alert(response.razorpay_signature)
-                        },
-                        "prefill": {{
-                            "name": "{razorpay_options['prefill']['name']}",
-                            "email": "{razorpay_options['prefill']['email']}",
-                            "contact": "{razorpay_options['prefill']['contact']}"
-                        }},
-                        "notes": {{
-                            "address": "{razorpay_options['notes']['address']}"
-                        }},
-                        "theme": {{
-                            "color": "{razorpay_options['theme']['color']}"
-                        }}
-                    };
-                    var rzp1 = new Razorpay(options);
-                    rzp1.on('payment.failed', function (response){
-                            alert(response.error.code);
-                            alert(response.error.description);
-                            alert(response.error.source);
-                            alert(response.error.step);
-                            alert(response.error.reason);
-                            alert(response.error.metadata.order_id);
-                            alert(response.error.metadata.payment_id);
-                    });
-                    document.getElementById('rzp-button1').onclick = function(e){
-                        rzp1.open();
-                        e.preventDefault();
-                    }
-                    </script>
-                    """, unsafe_allow_html=True)
+                        # Razorpay payment form rendering
+                        st.markdown(f"""
+                        <form action=f"{callback_url}" method="POST">
+                            <script
+                                src="https://checkout.razorpay.com/v1/checkout.js"
+                                data-key="{razorpay_key_id}"
+                                data-amount="{amount_to_charge}"
+                                data-currency="INR"
+                                data-order_id="{order_id}"
+                                data-buttontext="Pay with Razorpay"
+                                data-name="Your Company Name"
+                                data-description="Bank Statement Extraction"
+                                data-prefill.name="User Name"
+                                data-prefill.email="shivanis1406@gmail.com"
+                                data-prefill.contact="9654415614"
+                                data-theme.color="#F37254">
+                            </script>
+                            <input type="hidden" custom="Hidden Element" name="hidden">
+                        </form>
+                        """, unsafe_allow_html=True)
             else:
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
