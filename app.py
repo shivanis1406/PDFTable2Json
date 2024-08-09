@@ -199,7 +199,7 @@ def main():
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
                 # Display the image
                 img = Image.open("QrCode.jpeg")
-                img = img.resize((400, 400), Image.Resampling.LANCZOS)
+                img = img.resize((800, 800), Image.Resampling.LANCZOS)
                 st.image(img, caption="Scan the QR code to make the payment", use_column_width=False)
             else:
                 pdf_to_png("temp.pdf", images_folder, 300, lim)
