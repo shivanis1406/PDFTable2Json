@@ -19,12 +19,14 @@ output_folder = "output"
 #lim = int(sys.argv[2])
 
 # Azure API and Endpoint keys
-key = os.environ['AZURE_KEY1']
-endpoint = os.environ['AZURE_ENDPOINT']
+#key = os.environ['AZURE_KEY1']
+#endpoint = os.environ['AZURE_ENDPOINT']
+key = st.secrets["AZURE_KEY1"]
+endpoint = st.secrets["AZURE_ENDPOINT"]
 
 # Razorpay credentials
-razorpay_key_id = os.environ['RAZORPAY_KEY_ID']
-razorpay_key_secret = os.environ['RAZORPAY_KEY_SECRET']
+#razorpay_key_id = os.environ['RAZORPAY_KEY_ID']
+#razorpay_key_secret = os.environ['RAZORPAY_KEY_SECRET']
 
 os.system(f"rm -rf {images}")
 os.system(f"mkdir {images}")
