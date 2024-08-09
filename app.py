@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import cv2
 import re
+from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
 #import razorpay 
@@ -21,6 +22,7 @@ output_folder = "output"
 # Azure API and Endpoint keys
 #key = os.environ['AZURE_KEY1']
 #endpoint = os.environ['AZURE_ENDPOINT']
+
 key = st.secrets["AZURE_KEY1"]
 endpoint = st.secrets["AZURE_ENDPOINT"]
 
@@ -78,9 +80,47 @@ def analyze_layout(local_file_path):
         result = poller.result()
     return result
 
+def isTransactionTable(table):
+    # Check if the header contains keywords related to transactions
+    if any(word in ' '.join(table[0]).lower() for word in ['balance', 'date', 'tran']):
+        return True
+
+    # Helper function to check if a string is a date
+    def is_date(string):
+        date_formats = [
+        '%Y-%m-%d',  # 2023-04-10
+        '%d-%m-%Y',  # 10-04-2023
+        '%m-%d-%Y',  # 04-10-2023
+        '%Y/%m/%d',  # 2023/04/10
+        '%d/%m/%Y',  # 10/04/2023
+        '%m/%d/%Y',  # 04/10/2023
+        '%d/%m/%y',  # 10/04/23
+        '%m/%d/%y',  # 04/10/23
+        ]
+        for fmt in date_formats:
+            try:
+                datetime.strptime(string, fmt)
+                return True
+            except ValueError:
+                continue
+        return False
+
+    # Helper function to check if a string is a number (integer or floating point)
+  
+    def is_number(string):
+            return re.match(r'^\d+\.?\d*$', string.replace(',', '')) is not None
+
+    # Check each row for the presence of a date and a number in the last or second last column
+    for row in table:  # Skip the header row
+        if any(is_date(cell) for cell in row) and (is_number(row[-1]) or is_number(row[-2])):
+            return True
+
+    return False
+
 # Function to extract table data from the result
 def extract_table_data(result):
     tables = []
+    transaction_tables = []
     for table in result.tables:
         rows = []
         for cell in table.cells:
@@ -88,7 +128,12 @@ def extract_table_data(result):
                 rows.append([])
             rows[cell.row_index].append(cell.content)
         tables.append(rows)
-    return tables
+    for table in tables:
+        print("Table : ")
+        print(table)
+        if isTransactionTable(table):
+            transaction_tables.append(table)
+    return transaction_tables
 
 # Convert the extracted tables into pandas dataframes
 def tables_to_dataframes(tables):
@@ -150,10 +195,14 @@ def createXls(directory_path, output_folder, lim):
                 result = analyze_layout(file_path)
 
                 tables = extract_table_data(result)
-                dataframes = tables_to_dataframes(tables)
-                save_tables(dataframes, os.path.splitext(filename)[0], output_folder)
+                if len(tables) > 0:
+                    dataframes = tables_to_dataframes(tables)
+                    save_tables(dataframes, os.path.splitext(filename)[0], output_folder)
 
-                print(f"Completed analysis for {filename}. Generating output files...")
+                    print(f"Completed analysis for {filename}. Generating output files...")
+                else:
+                    print(f"No transaction table found in {filename}")
+                    st.write(f"No transaction table found in {filename}")
 
 def fetch_payment_status(order_id):
     try:
@@ -199,7 +248,7 @@ def main():
                 st.write(f"You need to pay Rs {amount_to_charge / 100} for {lim} pages.")
                 # Display the image
                 img = Image.open("QrCode.jpeg")
-                #img = img.resize((800, 800), Image.Resampling.LANCZOS)
+                #img = img.resize((400, 400), Image.Resampling.LANCZOS)
                 st.image(img, caption="Scan the QR code to make the payment", use_column_width=False)
             else:
                 pdf_to_png("temp.pdf", images_folder, 300, lim)
