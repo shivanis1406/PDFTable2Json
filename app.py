@@ -34,7 +34,7 @@ os.system(f"mkdir {images}")
 os.system(f"rm -rf {output_folder}")
 os.system(f"mkdir {output_folder}")
 
-client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
+#client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
 
 def create_razorpay_order(amount, currency='INR'):
     order_data = {
