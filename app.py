@@ -9,7 +9,7 @@ import cv2
 import re
 from dotenv import load_dotenv
 import streamlit as st
-import razorpay 
+#import razorpay 
 
 load_dotenv()
 
