@@ -80,7 +80,7 @@ def extract_tables_with_best_strategy(pdf_path, start_pageno, end_pageno):
 # Function to save the tables in CSV and Excel format
 def save_tables(dfs, base_filename, output_folder):
     xlsx_filename = f"{output_folder}/{base_filename}_combined.xlsx"
-    
+    print("Number of tables found: ", len(dfs))
     with pd.ExcelWriter(xlsx_filename) as writer:
             for j in range(len(dfs)):
                 df = dfs[j]
@@ -99,7 +99,6 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
     end_indices = []
     start_indices = []
     all_lines = [[] for _ in range(start_pageno - 1, end_pageno)]
-    all_words = []
 
     header_pattern_withdate = re.compile(
                 r"date.*balance.*withdrawal.*deposit|"
@@ -138,18 +137,18 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
                 r"deposit.*withdrawal.*balance|",
                 re.IGNORECASE
     )
+    
+    start_index = -1
+    end_index = -1
+    words = []
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):
-            print("Page number is : ", page_num, start_pageno, end_pageno)
+            #print("Page number is : ", page_num, start_pageno, end_pageno)
             if page_num < end_pageno and page_num >= start_pageno - 1:
-                words = page.extract_words()
-                print("Number of words in page is : ", len(words))
-                start_index = -1
-                end_index = -1
-                i = 0
-                start_index = -1
-                end_index = -1
+                i = len(words)
+                words.extend(page.extract_words())
+                print("Starting from index ", i, "Number of words after adding page ", page_num," is : ", len(words))
                 while i < len(words):
                     j = i + 1
                     start_index = i
@@ -159,7 +158,7 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
                         end_index = j - 1
                         i = j
                         strr = " ".join([words[i]['text'] for i in range(start_index, end_index + 1)])
-                        #print("String is : ", str)
+                        ##print("String is : ", strr)
                         #If the str is a row containing headers
                         if header_pattern_withdate.match(strr):
                             x0s.append([words[i]['x0'] for i in range(start_index, end_index + 1)])
@@ -174,10 +173,9 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
 
                 #Find lines on all the pages between start_pagno. and end_pageno.
                 #all_lines.append(extract_horizontal_lines_from_pdf(pdf_path, page_num))
-                all_words.append(words)
     print("length of start_indices is ", len(start_indices))
     print("length of end_indices is ", len(end_indices))
-    return [x0s, x1s, texts, bottoms, end_indices, start_indices, all_words, all_lines]
+    return [x0s, x1s, texts, bottoms, end_indices, start_indices, words, all_lines]
 
 # Helper function to check if a string is a date
 def isDate(string):
@@ -245,28 +243,32 @@ def find_column_header(word, headerA, headerB):
 def isValidRow(words, row_index, end_index, x0s, x1s):
     #Create a string from the words and check if it is a valid row. Only for tables that do not have vertical lines separating columns
     i = row_index
-
+    #print("Row index is ", row_index, "End index is ", end_index)
     strr = ""
-    print("Checking if row at index ", row_index, "is valid or not......")
+    #print("Checking if row at index ", row_index, "is valid or not......")
     last_word_was_date = False
 
     while i <= end_index and abs(words[i]['bottom'] - words[row_index]['bottom']) < 0.001:
-        print("Word is ", words[i]['text'])
+        #print("Word is ", words[i]['text'], "i is ", i)
         #";" is the delimiter between columns
+
+        #if the word contains "summary" or "cumulative", return (False, -1, "END") to denote end of table
+        if 'summary' in words[i]['text'].lower() or 'cumulative' in words[i]['text'].lower():
+                strr += words[i]['text']
+                return (strr, False, i, "END")
+
         if i == row_index:
             #If the first word is a date then add to strr += words[i]['text']
             if isDate(words[i]['text']):
                 strr += words[i]['text']
                 last_word_was_date = True
                 last_header_index = 0
-            #if the first word contains "summary" or "cumulative", return (False, -1, "END") to denote end of table
-            if 'summary' in words[i]['text'].lower() or 'cumulative' in words[i]['text'].lower():
-                return (strr, False, i, "END")
             #If the first word is not a date, then words[i]['x0'] must be greater than x1s[0]. If yes, then add to str += ";" + words[i]['text']
             if not isDate(words[i]['text']):
                 if words[i]['x0'] < x1s[0]:
                     strr += words[i]['text']
                     return (strr, False, i, "")
+
                 j = 0
                 while j < len(x1s) and words[i]['x0'] > x1s[j]:
                     #Keep appending ";" until words[i]['x0'] > x1s[j]
@@ -284,12 +286,12 @@ def isValidRow(words, row_index, end_index, x0s, x1s):
 
             else:
                 if words[i]['x1'] < x0s[last_header_index + 1] and words[i]['x1'] > x1s[last_header_index]:
-                    print("Word is between two headers but table does not have vertical lines separating columns. Assuming left alignment of text")
+                    #print("Word is between two headers but table does not have vertical lines separating columns. Assuming left alignment of text")
                     strr += " " + words[i]['text']
                 else:
                     j = last_header_index + 1
                     while j < len(x0s) and words[i]['x1'] > x0s[j]:
-                        print("j is ", j, "len(x0s) is ", len(x0s))
+                        #print("j is ", j, "len(x0s) is ", len(x0s), "words[i]['x1'] is ", words[i]['x1'], "x0s[j] is ", x0s[j])
                         #word is between two headers but table does not have vertical lines separating columns. 
                         strr += ";"
                         j += 1
@@ -302,16 +304,22 @@ def isValidRow(words, row_index, end_index, x0s, x1s):
                 last_word_was_date = True
         i += 1
 
+        while (i <=end_index and abs(words[i]['bottom'] - words[row_index]['bottom']) > 0.001) or i > end_index:
+            if len(strr.split(";")) < len(x0s):
+                #Append empty strings to strr until the length of strr is equal to the number of headers
+                strr += ";"
+            else:
+                break
+
     #print("String is ", strr)
     return (strr, True, i, "")
 
 
-def create_table(words, start_index, end_index, column_headers, x0s, x1s, Hlines):
+def create_table(all_words, start_index, end_index, column_headers, x0s, x1s, Hlines):
     # Create a DataFrame with headers as column_headers
     df = pd.DataFrame(columns=column_headers)
     
     row_index = start_index
-    word = ""
     empty_spaces_between_headers = find_empty_spaces_between_headers(column_headers, x0s, x1s)
     print("Empty spaces between headers are ", empty_spaces_between_headers)
     print("Row index is ", row_index, "End index is ", end_index)
@@ -322,23 +330,23 @@ def create_table(words, start_index, end_index, column_headers, x0s, x1s, Hlines
         col_index = row_index
 
         #Check if row is valid or not. First word must be a date
-        #print("Row index just before isValidRow func call ", row_index)
-        (strr, is_valid_row, new_row_index, endOfTable) = isValidRow(words, row_index, end_index, x0s, x1s)
+        (strr, is_valid_row, new_row_index, endOfTable) = isValidRow(all_words, row_index, end_index, x0s, x1s)
         #print("Is row valid? ", is_valid_row, "End of table? ", endOfTable)
+        #print("Row is ", strr)
 
         if is_valid_row == True and endOfTable != "END":
             #Move to the next row
             row_index = new_row_index
             print("Row is valid", strr, " and Next row is ", row_index)
             #Current row
-            print([strr.split(";")])
+            #print([strr.split(";")])
             df = pd.concat([df, pd.DataFrame([strr.split(";")], columns=column_headers)], ignore_index=True)
             continue
             
-        if is_valid_row == False:
+        if is_valid_row == False and endOfTable != "END":
             #Increment row_index to move to the next row
             col_index = new_row_index
-            while col_index <= end_index and abs(words[col_index]['bottom'] - words[row_index]['bottom']) < 0.001:
+            while col_index <= end_index and abs(all_words[col_index]['bottom'] - all_words[row_index]['bottom']) < 0.001:
                 col_index += 1
             row_index = col_index
             print("Row", strr, "is not valid. Moving to the next row.", row_index)
@@ -348,6 +356,7 @@ def create_table(words, start_index, end_index, column_headers, x0s, x1s, Hlines
             print("End of table reached")
             break
 
+    print("Table is :")
     print(df.head(10))  # Print the first 10 rows for verification
     return df
 
@@ -356,6 +365,7 @@ def showHeaders(pdf_path, end_pageno, start_pageno):
 
     [x0s, x1s, headers, bottoms, end_indices, start_indices, all_words, all_lines] = find_header_coordinates(pdf_path, end_pageno, start_pageno)
     #lines is from all pages between start and end_pageno, lines[0], lines[1]... where 0 means page 1, 1 means page 2.
+    dfs = []
 
     if len(end_indices) == 0:
             print("Header row not found.")
@@ -404,14 +414,19 @@ def showHeaders(pdf_path, end_pageno, start_pageno):
 
         #words is the list of words from the entire pdf till page end_pageno.
         #Start looping over words from words[end_index + 1] till the next time you match head_pattern and find the table
-        dfs = []
+        
 
         if page_num < end_pageno - 1:
-            df = create_table(all_words[page_num], end_indices[page_num] + 1, start_indices[page_num + 1] - 1, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
+            print("Page number is ", page_num)
+            start_index = end_indices[page_num] + 1
+            end_index = start_indices[page_num + 1] - 1
+            df = create_table(all_words, start_index, end_index, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
         else:
             #Last page
             print("Last page")
-            df = create_table(all_words[page_num], end_indices[page_num] + 1, len(all_words[page_num]) - 1, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
+            start_index = end_indices[page_num] + 1
+            df = create_table(all_words, start_index, len(all_words) - 1, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
+        
         dfs.append(df)
 
     return dfs
@@ -421,7 +436,7 @@ pdf_path = "./Apr-24.pdf"
 #pdf_path = "rajuram ac statement.pdf"
 #Start Page always has table headers - Assumption!. Always start from the first page.
 start_pageno = 1
-end_pageno = 1
+end_pageno = 3
 
 dfs = showHeaders(pdf_path, end_pageno, start_pageno)
 save_tables(dfs, 'table_', output_folder)
