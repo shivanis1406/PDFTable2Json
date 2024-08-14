@@ -98,7 +98,8 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
     bottoms = []
     end_indices = []
     start_indices = []
-    all_lines = [[] for _ in range(start_pageno - 1, end_pageno)]
+    #all_lines = [[] for _ in range(start_pageno - 1, end_pageno)]
+    end_indices_page = []
 
     header_pattern_withdate = re.compile(
                 r"date.*balance.*withdrawal.*deposit|"
@@ -148,6 +149,7 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
             if page_num < end_pageno and page_num >= start_pageno - 1:
                 i = len(words)
                 words.extend(page.extract_words())
+                end_indices_page.append(len(words) - 1)
                 print("Starting from index ", i, "Number of words after adding page ", page_num," is : ", len(words))
                 while i < len(words):
                     j = i + 1
@@ -175,7 +177,7 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
                 #all_lines.append(extract_horizontal_lines_from_pdf(pdf_path, page_num))
     print("length of start_indices is ", len(start_indices))
     print("length of end_indices is ", len(end_indices))
-    return [x0s, x1s, texts, bottoms, end_indices, start_indices, words, all_lines]
+    return [x0s, x1s, texts, bottoms, end_indices, start_indices, words, end_indices_page]
 
 # Helper function to check if a string is a date
 def isDate(string):
@@ -315,7 +317,7 @@ def isValidRow(words, row_index, end_index, x0s, x1s):
     return (strr, True, i, "")
 
 
-def create_table(all_words, start_index, end_index, column_headers, x0s, x1s, Hlines):
+def create_table(all_words, start_index, end_index, column_headers, x0s, x1s):
     # Create a DataFrame with headers as column_headers
     df = pd.DataFrame(columns=column_headers)
     
@@ -337,7 +339,7 @@ def create_table(all_words, start_index, end_index, column_headers, x0s, x1s, Hl
         if is_valid_row == True and endOfTable != "END":
             #Move to the next row
             row_index = new_row_index
-            print("Row is valid", strr, " and Next row is ", row_index)
+            #print("Row is valid", strr, " and Next row is ", row_index)
             #Current row
             #print([strr.split(";")])
             df = pd.concat([df, pd.DataFrame([strr.split(";")], columns=column_headers)], ignore_index=True)
@@ -363,7 +365,7 @@ def create_table(all_words, start_index, end_index, column_headers, x0s, x1s, Hl
 
 def showHeaders(pdf_path, end_pageno, start_pageno):
 
-    [x0s, x1s, headers, bottoms, end_indices, start_indices, all_words, all_lines] = find_header_coordinates(pdf_path, end_pageno, start_pageno)
+    [x0s, x1s, headers, bottoms, end_indices, start_indices, all_words, end_indices_page] = find_header_coordinates(pdf_path, end_pageno, start_pageno)
     #lines is from all pages between start and end_pageno, lines[0], lines[1]... where 0 means page 1, 1 means page 2.
     dfs = []
 
@@ -372,60 +374,83 @@ def showHeaders(pdf_path, end_pageno, start_pageno):
 
     for page_num in range(start_pageno - 1, end_pageno):
         print("Page number is ", page_num)
-        print("Start index is ", start_indices[page_num])
-        print("End index is ", end_indices[page_num])
-        print("Header row coordinates: ")
-        print(x0s[page_num])
-        print("######################")
-        print(x1s[page_num])
-        print("######################")
-        print(headers[page_num])
+        try:
+            print("Start index is ", start_indices[page_num])
+            print("End index is ", end_indices[page_num])
+            print("Header row coordinates: ")
+            print(x0s[page_num])
+            print("######################")
+            print(x1s[page_num])
+            print("######################")
+            print(headers[page_num])
 
 
 
-        strr = ""
-        maxx = 0
-
-        for j in range(len(x0s[page_num]) - 1):
-            strr+="{}--->{}".format(headers[page_num][j], x0s[page_num][j+1] - x1s[page_num][j])
-            strr+="--->"
-            if maxx < x0s[page_num][j+1] - x1s[page_num][j]:
-                maxx = x0s[page_num][j+1] - x1s[page_num][j]
-
-        strr+="{}".format(headers[page_num][j+1])
-        print(strr)
-
-        strr = ""
-        column_headers = []
-        k = 0
-        while k < len(x0s[page_num]):
-            #print("k is ",k, "writing ",words[i][k])
-            strr += headers[page_num][k]
-            m = k + 1
-            while m < len(x0s[page_num]) - 1 and x0s[page_num][m] - x1s[page_num][m - 1] < (maxx/20):
-                strr += "_" + headers[page_num][m]
-                m = m + 1
-                #print(strr,m)
-            column_headers.append(strr)
             strr = ""
-            k = m
+            maxx = 0
 
-        print("Column Headers are ",column_headers)
+            for j in range(len(x0s[page_num]) - 1):
+                strr+="{}--->{}".format(headers[page_num][j], x0s[page_num][j+1] - x1s[page_num][j])
+                strr+="--->"
+                if maxx < x0s[page_num][j+1] - x1s[page_num][j]:
+                    maxx = x0s[page_num][j+1] - x1s[page_num][j]
+
+            strr+="{}".format(headers[page_num][j+1])
+            print(strr)
+
+            strr = ""
+            column_headers = []
+            k = 0
+            while k < len(x0s[page_num]):
+                #print("k is ",k, "writing ",words[i][k])
+                strr += headers[page_num][k]
+                m = k + 1
+                while m < len(x0s[page_num]) - 1 and x0s[page_num][m] - x1s[page_num][m - 1] < (maxx/20):
+                    strr += "_" + headers[page_num][m]
+                    m = m + 1
+                    #print(strr,m)
+                column_headers.append(strr)
+                strr = ""
+                k = m
+
+            print("Column Headers are ",column_headers)
+
+        except:
+            print("Page number ", page_num, " does not have a header row.")
 
         #words is the list of words from the entire pdf till page end_pageno.
         #Start looping over words from words[end_index + 1] till the next time you match head_pattern and find the table
         
+        #last_page_with_header, next_page_with_header = find_bounds_of_table(page_num, end_pageno, end_indices, start_indices)
+        #Start_index and end_index are the bounds of table.
+        #Start_index < all_words[end_index_of_page] and table may be go beyond the end_index_of_page. Hence, end_index >= all_words[end_index_of_page]
+        
+        y = 0
+        while y < len(end_indices) and end_indices[y] < end_indices_page[page_num]:
+            #print("y is ", y, "end_indices[y] is ", end_indices[y], "end_indices_page[page_num] is ", end_indices_page[page_num])
+            y = y + 1
+        start_index = end_indices[y - 1] + 1
+        x0_index = y - 1
+
+        y = len(end_indices) - 1
+        while start_indices[y] > end_indices_page[page_num] and y >= 0:
+            y = y - 1
+        
+        if y < len(end_indices) - 1:
+            end_index = start_indices[y + 1] - 1
+            x1_index = y + 1
+        else:
+            end_index = len(all_words) - 1
+            x1_index = y
 
         if page_num < end_pageno - 1:
             print("Page number is ", page_num)
-            start_index = end_indices[page_num] + 1
-            end_index = start_indices[page_num + 1] - 1
-            df = create_table(all_words, start_index, end_index, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
+            df = create_table(all_words, start_index, end_index, column_headers, x0s[x0_index], x1s[x1_index])
         else:
             #Last page
             print("Last page")
-            start_index = end_indices[page_num] + 1
-            df = create_table(all_words, start_index, len(all_words) - 1, column_headers, x0s[page_num], x1s[page_num], all_lines[page_num])
+            #start_index = end_indices[page_num] + 1
+            df = create_table(all_words, start_index, end_index, column_headers, x0s[x0_index], x1s[x1_index])
         
         dfs.append(df)
 
@@ -436,7 +461,7 @@ pdf_path = "./Apr-24.pdf"
 #pdf_path = "rajuram ac statement.pdf"
 #Start Page always has table headers - Assumption!. Always start from the first page.
 start_pageno = 1
-end_pageno = 3
+end_pageno = 6
 
 dfs = showHeaders(pdf_path, end_pageno, start_pageno)
 save_tables(dfs, 'table_', output_folder)
