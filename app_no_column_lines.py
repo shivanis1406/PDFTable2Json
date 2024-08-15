@@ -5,81 +5,13 @@ import openpyxl
 from datetime import datetime
 from utils import extract_horizontal_lines_from_pdf
 
-output_folder = "./output/"
+#output_folder = "./output/"
 
-os.system(f"rm -rf {output_folder}")
-os.system(f"mkdir -p {output_folder}")
-
-def extract_tables_with_best_strategy(pdf_path, start_pageno, end_pageno):
-    strategies = [
-        {"horizontal_strategy": "lines", "vertical_strategy": "lines"},
-        {"horizontal_strategy": "text", "vertical_strategy": "text"},
-        {"horizontal_strategy": "lines", "vertical_strategy": "text"},
-        {"horizontal_strategy": "text", "vertical_strategy": "lines"}
-    ]
-
-    best_table = None
-    best_strategy = None
-    max_cells = 0
-
-    
-    with pdfplumber.open(pdf_path) as pdf:
-        for page_num, page in enumerate(pdf.pages):
-            if page_num != start_pageno - 1:
-                continue
-
-            for strategy in strategies:
-                if 1:
-
-                    # Crop the page to the bounding box
-                    cropped_page = cropPage(page)
-                    if cropped_page is None:
-                        print("No table found with the given strategies.")
-                        best_strategy = None
-                        tables = []
-                        break
-
-                    # Extract the table from the cropped page
-                    tables = cropped_page.extract_tables(strategy)
-                else:
-                    tables = page.extract_tables(strategy)
-
-                print(f"Number of tables extracted from page {page_num}:", len(tables))
-
-                for table in tables:
-                    cell_count = sum(len(row) for row in table)
-                    if cell_count > max_cells:
-                        max_cells = cell_count
-                        best_tables = tables
-                        best_strategy = strategy
-
-    if best_tables is not None:
-        print(f"Best Strategy: {best_strategy}")
-        all_tables = {}
-        with pdfplumber.open(pdf_path) as pdf:
-            for page_num, page in enumerate(pdf.pages):
-                if page_num > end_pageno - 1:
-                    continue
-                print("Page number is : ", page_num)
-                if page_num == 0:
-                    #tables = cropped_page.extract_tables(best_strategy)
-                    tables = page.extract_words(keep_blank_chars=True, use_text_flow=True)
-                else:
-                    tables = page.extract_tables(best_strategy)
-                print(f"Number of tables extracted from page {page_num}:", len(tables))
-                print(tables)
-                all_tables.update({page_num : [pd.DataFrame(table) for table in tables]})
-        #for row in best_table:
-        #    print(row)
-        #Return a dict where every key, value pair represents list of dfs on that page
-        return all_tables
-    else:
-        print(f"No table found with the given strategies.")
-        return {}
+#os.system(f"rm -rf {output_folder}")
+#os.system(f"mkdir -p {output_folder}")
 
 # Function to save the tables in CSV and Excel format
-def save_tables(dfs, base_filename, output_folder):
-    xlsx_filename = f"{output_folder}/{base_filename}_combined.xlsx"
+def save_tables(dfs, base_filename, xlsx_filename):
     print("Number of tables found: ", len(dfs))
     with pd.ExcelWriter(xlsx_filename) as writer:
             for j in range(len(dfs)):
@@ -456,12 +388,13 @@ def showHeaders(pdf_path, end_pageno, start_pageno):
 
     return dfs
 
-pdf_path = "./Apr-24.pdf"
-#pdf_path = "Acct Statement_XX6820_02082024.pdf"
-#pdf_path = "rajuram ac statement.pdf"
-#Start Page always has table headers - Assumption!. Always start from the first page.
-start_pageno = 1
-end_pageno = 6
+def parse_table_without_vertical_lines(pdf_path, start_pageno, end_pageno, output_file):
+    #pdf_path = "./Apr-24.pdf"
+    #pdf_path = "Acct Statement_XX6820_02082024.pdf"
+    #pdf_path = "rajuram ac statement.pdf"
+    ##Start Page always has table headers - Assumption!. Always start from the first page.
+    #start_pageno = 1
+    #end_pageno = 6
 
-dfs = showHeaders(pdf_path, end_pageno, start_pageno)
-save_tables(dfs, 'table_', output_folder)
+    dfs = showHeaders(pdf_path, end_pageno, start_pageno)
+    save_tables(dfs, 'table_', output_file)
