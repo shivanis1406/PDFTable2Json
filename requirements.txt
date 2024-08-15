@@ -10,3 +10,5 @@ streamlit
 opencv-python-headless
 datetime
 pdfplumber
+opencv-python
+numpy
