@@ -1,5 +1,7 @@
 import pdfplumber
 from collections import defaultdict
+import cv2
+import numpy as np
 
 def find_horizontal_lines(lines, tolerance=1):
     horizontal_lines = []
@@ -66,7 +68,29 @@ def extract_horizontal_lines_from_pdf(pdf_path, pageno):
         #    print(f"Merged horizontal line from x0 = {line['x0']} to x1 = {line['x1']}, at y = {line['y']}")
         return merged_lines
 
+def findPdfVerticalLines(image_path):
+    image = cv2.imread(image_path, 0)  # Load the image in grayscale
+    edges = cv2.Canny(image, 50, 150, apertureSize=3)
 
+    # Use HoughLines to detect lines
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, minLineLength=100, maxLineGap=10)
+
+    vertical_lines = []
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            if abs(x1 - x2) < 0.01:  # Almost vertical line
+                vertical_lines.append(line[0])
+
+    if vertical_lines:
+        print(f"Found {len(vertical_lines)} vertical lines in the image.")
+        for line in vertical_lines:
+            print(f"Line: {line}")
+        return True
+    else:
+        print("No vertical lines found in the image.")
+        return False
+        
 def extract_tables_with_best_strategy(pdf_path, start_pageno, end_pageno):
     strategies = [
         {"horizontal_strategy": "lines", "vertical_strategy": "lines"},
