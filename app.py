@@ -10,6 +10,9 @@ import re
 from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
+from app_no_column_lines import parse_table_without_vertical_lines
+from utils import findPdfVerticalLines
+
 #import razorpay 
 
 load_dotenv()
@@ -17,14 +20,16 @@ load_dotenv()
 #pdf_path = sys.argv[1]
 images = "images"
 output_folder = "output"
+output_file = f'{output_folder}/combined_sheets.xlsx'
+
 #lim = int(sys.argv[2])
 
 # Azure API and Endpoint keys
-#key = os.environ['AZURE_KEY1']
-#endpoint = os.environ['AZURE_ENDPOINT']
+key = os.environ['AZURE_KEY1']
+endpoint = os.environ['AZURE_ENDPOINT']
 
-key = st.secrets["AZURE_KEY1"]
-endpoint = st.secrets["AZURE_ENDPOINT"]
+#key = st.secrets["AZURE_KEY1"]
+#endpoint = st.secrets["AZURE_ENDPOINT"]
 
 # Razorpay credentials
 #razorpay_key_id = os.environ['RAZORPAY_KEY_ID']
@@ -251,14 +256,21 @@ def main():
                 #img = img.resize((400, 400), Image.Resampling.LANCZOS)
                 st.image(img, caption="Scan the QR code to make the payment", use_column_width=False)
             else:
+                #Check if pdf has vertical lines or not 
                 pdf_to_png("temp.pdf", images_folder, 300, lim)
-                createXls(images_folder, output_folder, lim)
+                is_vertical_lines = findPdfVerticalLines(images_folder+"/page_1.png")
+                
+                if is_vertical_lines:
+                #    pdf_to_png("temp.pdf", images_folder, 300, lim)
+                    createXls(images_folder, output_folder, lim)
 
-                output_file = f'{output_folder}/combined_sheets.xlsx'
-                createCombinedXls(output_folder, output_file)
+                    createCombinedXls(output_folder, output_file)
+                else:
+                    parse_table_without_vertical_lines("temp.pdf", 1, lim, output_file)
 
                 with open(output_file, "rb") as f:
                     st.download_button("Download Excel", f, file_name="BankStatement.xlsx")
+                
 
 if __name__ == "__main__":
     main()
