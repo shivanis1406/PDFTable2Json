@@ -262,10 +262,12 @@ def main():
                 
                 if is_vertical_lines:
                 #    pdf_to_png("temp.pdf", images_folder, 300, lim)
+                    print("Table has vertical lines separating columns")
                     createXls(images_folder, output_folder, lim)
 
                     createCombinedXls(output_folder, output_file)
                 else:
+                    print("Table does not have vertical lines separating columns")
                     parse_table_without_vertical_lines("temp.pdf", 1, lim, output_file)
 
                 with open(output_file, "rb") as f:
