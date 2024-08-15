@@ -1,8 +1,5 @@
 import pdfplumber
 from collections import defaultdict
-from pdf2image import convert_from_path
-import cv2
-import numpy as np
 
 def find_horizontal_lines(lines, tolerance=1):
     horizontal_lines = []
