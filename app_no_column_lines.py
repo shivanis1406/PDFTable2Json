@@ -98,7 +98,7 @@ def find_header_coordinates(pdf_path, end_pageno, start_pageno):
                             x0s.append([words[i]['x0'] for i in range(start_index, end_index + 1)])
                             x1s.append([words[i]['x1'] for i in range(start_index, end_index + 1)])
                             texts.append([words[i]['text'] for i in range(start_index, end_index + 1)])
-                            bottoms.append([words[i]['bottom'] for i in range(start_index, end_index + 1)])   
+                            bottoms.append(words[start_index]['bottom'])   
                             end_indices.append(end_index)
                             start_indices.append(start_index)
                         elif header_pattern.match(strr):
