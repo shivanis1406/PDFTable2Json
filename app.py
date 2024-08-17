@@ -11,7 +11,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
 from app_no_column_lines import parse_table_without_vertical_lines
-from utils import findPdfVerticalLines
+from utils import findPdfVerticalLines, extract_lines_from_pdf, find_header_coordinates, extract_tables_with_best_strategy
 
 #import razorpay 
 
@@ -258,16 +258,18 @@ def main():
             else:
                 #Check if pdf has vertical lines or not 
                 pdf_to_png("temp.pdf", images_folder, 300, lim)
-                is_vertical_lines = findPdfVerticalLines(images_folder+"/page_1.png")
-                
+                #is_vertical_lines = findPdfVerticalLines(images_folder+"/page_1.png")
+                [x0s, x1s, headers, tops, bottoms, end_indices, start_indices, all_words, end_indices_page] = find_header_coordinates("temp.pdf", lim, 1)
+                is_vertical_lines = extract_lines_from_pdf("temp.pdf", output_folder+"/annotated_page.png", bottoms, tops)
+                ##Doesn't work 
+                #extract_tables_with_best_strategy("temp.pdf", 1, lim)
+
                 if is_vertical_lines:
                 #    pdf_to_png("temp.pdf", images_folder, 300, lim)
-                    print("Table has vertical lines separating columns")
                     createXls(images_folder, output_folder, lim)
 
                     createCombinedXls(output_folder, output_file)
                 else:
-                    print("Table does not have vertical lines separating columns")
                     parse_table_without_vertical_lines("temp.pdf", 1, lim, output_file)
 
                 with open(output_file, "rb") as f:
