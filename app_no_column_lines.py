@@ -3,7 +3,7 @@ import pandas as pd
 import  os, re
 import openpyxl
 from datetime import datetime
-from utils import extract_horizontal_lines_from_pdf
+from utils import extract_horizontal_lines_from_pdf, find_header_coordinates
 
 #output_folder = "./output/"
 
@@ -22,94 +22,6 @@ def save_tables(dfs, base_filename, xlsx_filename):
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     print(f"Combined Excel file saved as {xlsx_filename}")
-
-def find_header_coordinates(pdf_path, end_pageno, start_pageno):
-    x0s = []
-    x1s = []
-    texts = []
-    bottoms = []
-    end_indices = []
-    start_indices = []
-    #all_lines = [[] for _ in range(start_pageno - 1, end_pageno)]
-    end_indices_page = []
-
-    header_pattern_withdate = re.compile(
-                r"date.*balance.*withdrawal.*deposit|"
-                r"date.*balance.*deposit.*withdrawal|"
-                r"date.*withdrawal.*balance.*deposit|"
-                r"date.*withdrawal.*deposit.*balance|"
-                r"date.*deposit.*balance.*withdrawal|"
-                r"date.*deposit.*withdrawal.*balance|"
-                r"balance.*date.*withdrawal.*deposit|"
-                r"balance.*date.*deposit.*withdrawal|"
-                r"balance.*withdrawal.*date.*deposit|"
-                r"balance.*withdrawal.*deposit.*date|"
-                r"balance.*deposit.*date.*withdrawal|"
-                r"balance.*deposit.*withdrawal.*date|"
-                r"withdrawal.*date.*balance.*deposit|"
-                r"withdrawal.*date.*deposit.*balance|"
-                r"withdrawal.*balance.*date.*deposit|"
-                r"withdrawal.*balance.*deposit.*date|"
-                r"withdrawal.*deposit.*date.*balance|"
-                r"withdrawal.*deposit.*balance.*date|"
-                r"deposit.*date.*balance.*withdrawal|"
-                r"deposit.*date.*withdrawal.*balance|"
-                r"deposit.*balance.*date.*withdrawal|"
-                r"deposit.*balance.*withdrawal.*date|"
-                r"deposit.*withdrawal.*date.*balance|"
-                r"deposit.*withdrawal.*balance.*date", 
-                re.IGNORECASE
-            )
-
-    header_pattern = re.compile(
-                r"balance.*withdrawal.*deposit|"
-                r"balance.*deposit.*withdrawal|"
-                r"withdrawal.*balance.*deposit|"
-                r"withdrawal.*deposit.*balance|"
-                r"deposit.*balance.*withdrawal|"
-                r"deposit.*withdrawal.*balance|",
-                re.IGNORECASE
-    )
-    
-    start_index = -1
-    end_index = -1
-    words = []
-
-    with pdfplumber.open(pdf_path) as pdf:
-        for page_num, page in enumerate(pdf.pages):
-            #print("Page number is : ", page_num, start_pageno, end_pageno)
-            if page_num < end_pageno and page_num >= start_pageno - 1:
-                i = len(words)
-                words.extend(page.extract_words())
-                end_indices_page.append(len(words) - 1)
-                print("Starting from index ", i, "Number of words after adding page ", page_num," is : ", len(words))
-                while i < len(words):
-                    j = i + 1
-                    start_index = i
-                    while j < len(words) and words[j]['bottom'] - words[i]['bottom'] < 0.001:
-                        j += 1
-                    if (j < len(words) and words[j]['bottom'] - words[i]['bottom'] > 0.001) or (j >= len(words) and words[j - 1]['bottom'] - words[i]['bottom'] < 0.001):
-                        end_index = j - 1
-                        i = j
-                        strr = " ".join([words[i]['text'] for i in range(start_index, end_index + 1)])
-                        ##print("String is : ", strr)
-                        #If the str is a row containing headers
-                        if header_pattern_withdate.match(strr):
-                            x0s.append([words[i]['x0'] for i in range(start_index, end_index + 1)])
-                            x1s.append([words[i]['x1'] for i in range(start_index, end_index + 1)])
-                            texts.append([words[i]['text'] for i in range(start_index, end_index + 1)])
-                            bottoms.append(words[start_index]['bottom'])   
-                            end_indices.append(end_index)
-                            start_indices.append(start_index)
-                        elif header_pattern.match(strr):
-                            #Check is 'date' is present in the next row. If yes, then it both rows combined is a header row
-                            pass
-
-                #Find lines on all the pages between start_pagno. and end_pageno.
-                #all_lines.append(extract_horizontal_lines_from_pdf(pdf_path, page_num))
-    print("length of start_indices is ", len(start_indices))
-    print("length of end_indices is ", len(end_indices))
-    return [x0s, x1s, texts, bottoms, end_indices, start_indices, words, end_indices_page]
 
 # Helper function to check if a string is a date
 def isDate(string):
@@ -297,7 +209,7 @@ def create_table(all_words, start_index, end_index, column_headers, x0s, x1s):
 
 def showHeaders(pdf_path, end_pageno, start_pageno):
 
-    [x0s, x1s, headers, bottoms, end_indices, start_indices, all_words, end_indices_page] = find_header_coordinates(pdf_path, end_pageno, start_pageno)
+    [x0s, x1s, headers, tops, bottoms, end_indices, start_indices, all_words, end_indices_page] = find_header_coordinates(pdf_path, end_pageno, start_pageno)
     #lines is from all pages between start and end_pageno, lines[0], lines[1]... where 0 means page 1, 1 means page 2.
     dfs = []
 
